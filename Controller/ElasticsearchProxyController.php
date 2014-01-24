@@ -11,6 +11,7 @@ class XolaElasticsearchProxyController extends Controller
     public function proxyAction(Request $request)
     {
         // Forbid every request but jquery's XHR
+
         if (!$request->isXmlHttpRequest()) {
             return new Response('', 400,
                 array('Content-Type' => 'application/json'));
