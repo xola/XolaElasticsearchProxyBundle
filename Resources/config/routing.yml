@@ -1,0 +1,3 @@
+xola_elasticsearch_proxy:
+     pattern:  /elasticsearch
+     defaults: { _controller: XolaElasticsearchProxyBundle:ElasticsearchProxy:proxy }
