@@ -12,19 +12,35 @@ class ElasticsearchProxyController extends Controller
     {
         // Forbid every request but json requests
         $contentType = $request->headers->get('Content-Type');
-        if(strpos($request->headers->get('Content-Type'), 'application/json') === false) {
-            return new Response('', 400,
-                array('Content-Type' => 'application/json'));
-        }
 
+        // TODO: Kibana doesn't send content type header. Commenting for now. Check later
+        //        if(strpos($request->headers->get('Content-Type'), 'application/json') === false) {
+        //            return new Response('', 400,
+        //                array('Content-Type' => 'application/json'));
+        //        }
+
+        // Get content for passing on to the curl
         $data = json_decode($request->getContent(), true);
 
+        // Get query string
+        $query = $request->getQueryString();
+
+        // Construct url
         $config = $this->container->getParameter('xola_elasticsearch_proxy');
         $url = $config['client']['host'] . ':' . $config['client']['port'] . '/' . $slug;
-        $method = $request->getMethod();
-        //        $params = $request->request->get('params');
 
-        if($contentType == null) {
+        if($query) {
+            // Query string exists. Add it to the url
+            $url .= '?' . $query;
+        }
+
+        // Method for curl request
+        $method = $request->getMethod();
+
+
+        // TODO: Discuss. Do we want to set the default content type assuming we support only ajax json requests ?
+        // Content type for curl
+        if($contentType) {
             $contentType = 'application/json';
         }
 

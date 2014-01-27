@@ -1,3 +1,5 @@
 xola_elasticsearch_proxy:
      pattern:  /elasticsearch/{slug}
      defaults: { _controller: XolaElasticsearchProxyBundle:ElasticsearchProxy:proxy }
+     requirements:
+        slug: ".+"
