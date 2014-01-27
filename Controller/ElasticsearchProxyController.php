@@ -4,6 +4,8 @@ namespace Xola\ElasticsearchProxyBundle\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class ElasticsearchProxyController extends Controller
 {
@@ -22,6 +24,17 @@ class ElasticsearchProxyController extends Controller
         // Get content for passing on to the curl
         $data = json_decode($request->getContent(), true);
 
+        $user = $this->get('security.context')->getToken()->getUser();
+
+        if(!$user) {
+            throw new AccessDeniedException();
+        }
+
+        // get the filter of the data
+        $newFilter = array('term' => array('seller.id' => $user->getId()));
+
+        $this->addBoolFilter($data, $newFilter);
+
         // Get query string
         $query = $request->getQueryString();
 
@@ -36,7 +49,6 @@ class ElasticsearchProxyController extends Controller
 
         // Method for curl request
         $method = $request->getMethod();
-
 
         // TODO: Discuss. Do we want to set the default content type assuming we support only ajax json requests ?
         // Content type for curl
@@ -68,28 +80,41 @@ class ElasticsearchProxyController extends Controller
         $curlInfo = curl_getinfo($ch);
         curl_close($ch);
 
-        // TODO: set other headers of the curl response
-        //        list($headers, $response) = explode("\r\n\r\n", $response, 2);
-        //        $headers = explode("\r\n", $headers);
-        //        preg_match_all('/Set-Cookie: (.*)\b/', $headers, $cookies);
-        //        $cookies = $cookies[1];
-
         if($response === false) {
             return new Response('', 404, array('Content-Type' => $contentType));
         } else {
             $response = new Response($response, $curlInfo['http_code'], array('Content-Type' => $curlInfo['content_type']));
 
-            // TODO: check if all the below is required.
-            //            foreach($cookies as $rawCookie) {
-            //                $cookie = Cookie::fromString($rawCookie);
-            //                $value = $cookie->getValue();
-            //                if(!empty($value)) {
-            //                    $value = str_replace(' ', '+', $value);
-            //                }
-            //                $customCookie = new Cookie($cookie->getName(), $value, $cookie->getExpiresTime() == null ? 0 : $cookie->getExpiresTime(), $cookie->getPath());
-            //                $response->headers->setCookie($customCookie);
-            //            }
             return $response;
         }
+    }
+
+    /**
+     * Returns the value of the needle within the target array
+     *
+     * @param array $data
+     * @param array $newFilter
+     *
+     * @return array|null
+     */
+    private function addBoolFilter(&$data, $newFilter)
+    {
+        $res = null;
+        foreach($data as $key => $val) {
+
+            if($key === 'filter') {
+                if(!empty($data[$key]['bool'])) {
+                    if(!is_array($data[$key]['bool']['must'])) {
+                        $data[$key]['bool']['must'] = array();
+                    }
+                    array_push($data[$key]['bool']['must'], $newFilter);
+                }
+
+                break;
+            } elseif(is_array($data[$key]))
+                $this->addBoolFilter($data[$key], $newFilter);
+        }
+
+        return $data;
     }
 }
