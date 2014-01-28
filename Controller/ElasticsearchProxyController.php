@@ -80,6 +80,9 @@ class ElasticsearchProxyController extends Controller
         $curlInfo = curl_getinfo($ch);
         curl_close($ch);
 
+        // TODO: set other headers of the curl response into symfony response
+        list($headers, $response) = explode("\r\n\r\n", $response, 2);
+
         if($response === false) {
             return new Response('', 404, array('Content-Type' => $contentType));
         } else {
