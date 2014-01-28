@@ -2,122 +2,101 @@
 namespace Xola\ElasticsearchProxyBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class ElasticsearchProxyController extends Controller
 {
 
+    private $filterApplied = false;
+
     public function proxyAction(Request $request, $slug)
     {
-        // Forbid every request but json requests
-        $contentType = $request->headers->get('Content-Type');
-
-        // TODO: Kibana doesn't send content type header. Commenting for now. Check later
-        //        if(strpos($request->headers->get('Content-Type'), 'application/json') === false) {
-        //            return new Response('', 400,
-        //                array('Content-Type' => 'application/json'));
-        //        }
-
-        // Get content for passing on to the curl
+        // Get content for passing on in elastic search request
         $data = json_decode($request->getContent(), true);
 
         $user = $this->get('security.context')->getToken()->getUser();
 
-        if(!$user) {
-            throw new AccessDeniedException();
+        if (!$user) {
+            // User not authenticated
+            throw new UnauthorizedHttpException('');
         }
 
-        // get the filter of the data
-        $newFilter = array('term' => array('seller.id' => $user->getId()));
+        // Authorisation filter is the filter on seller
+        $authFilter = array('term' => array('seller.id' => $user->getId()));
 
-        $this->addBoolFilter($data, $newFilter);
+        // Inject authorisation filter
+        $this->addAuthFilter($data, $authFilter);
+
+        if (!$this->filterApplied) {
+            // Authorisation filter could not be applied. Bad Request.
+            throw new BadRequestHttpException();
+        }
 
         // Get query string
         $query = $request->getQueryString();
 
-        // Construct url
+        // TODO: Do we want to add the protocol to the url ?
+        // Construct url for making elastic search request
         $config = $this->container->getParameter('xola_elasticsearch_proxy');
         $url = $config['client']['host'] . ':' . $config['client']['port'] . '/' . $slug;
 
-        if($query) {
+        if ($query) {
             // Query string exists. Add it to the url
             $url .= '?' . $query;
         }
 
-        // Method for curl request
+        // Method for elastic search request is same is the request method
         $method = $request->getMethod();
-
-        // TODO: Discuss. Do we want to set the default content type assuming we support only ajax json requests ?
-        // Content type for curl
-        if($contentType) {
-            $contentType = 'application/json';
-        }
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_HEADER, true);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
-        $requestCookies = $request->cookies->all();
-
-        $cookieArray = array();
-        foreach($requestCookies as $cookieName => $cookieValue) {
-            $cookieArray[] = "{$cookieName}={$cookieValue}";
-        }
-
-        if(count($cookieArray)) {
-            $cookie_string = implode('; ', $cookieArray);
-            curl_setopt($ch, CURLOPT_COOKIE, $cookie_string);
-        }
-
         $response = curl_exec($ch);
         $curlInfo = curl_getinfo($ch);
         curl_close($ch);
 
-        // TODO: set other headers of the curl response into symfony response
-        list($headers, $response) = explode("\r\n\r\n", $response, 2);
-
-        if($response === false) {
-            return new Response('', 404, array('Content-Type' => $contentType));
+        if ($response === false) {
+            return new JsonResponse('', 404);
         } else {
-            $response = new Response($response, $curlInfo['http_code'], array('Content-Type' => $curlInfo['content_type']));
-
-            return $response;
+            return new JsonResponse($response, $curlInfo['http_code']);
         }
     }
 
     /**
-     * Returns the value of the needle within the target array
+     * Modifies the specified elastic search query by injecting it the specified authorisation filter.
+     * Looks for all the boolean filters in the query and adds authorisation filter within 'MUST' clause.
+     * Additionally sets the class variable 'filterApplied = TRUE' if the query is modified
      *
-     * @param array $data
-     * @param array $newFilter
+     *
+     * @param array $query
+     * @param array $authFilter
      *
      * @return array|null
      */
-    private function addBoolFilter(&$data, $newFilter)
+    private function addAuthFilter(&$query, $authFilter)
     {
         $res = null;
-        foreach($data as $key => $val) {
+        foreach ($query as $key => $val) {
 
-            if($key === 'filter') {
-                if(!empty($data[$key]['bool'])) {
-                    if(!is_array($data[$key]['bool']['must'])) {
-                        $data[$key]['bool']['must'] = array();
+            if ($key === 'filter') {
+                if (!empty($query[$key]['bool'])) {
+                    if (!is_array($query[$key]['bool']['must'])) {
+                        $query[$key]['bool']['must'] = array();
                     }
-                    array_push($data[$key]['bool']['must'], $newFilter);
+                    array_push($query[$key]['bool']['must'], $authFilter);
+
+                    $this->filterApplied = true;
                 }
 
-                break;
-            } elseif(is_array($data[$key]))
-                $this->addBoolFilter($data[$key], $newFilter);
+            } elseif (is_array($query[$key]))
+                $this->addAuthFilter($query[$key], $authFilter);
         }
-
-        return $data;
     }
 }
