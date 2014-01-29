@@ -4,6 +4,7 @@ namespace Xola\ElasticsearchProxyBundle\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -11,13 +12,20 @@ use Symfony\Component\Security\Core\User\UserInterface;
 class ElasticsearchProxyController extends Controller
 {
 
-    public function proxyAction(Request $request, $slug)
+    public function proxyAction(Request $request, $index, $slug)
     {
         $user = $this->get('security.context')->getToken()->getUser();
 
         if(!$user || !$user instanceof UserInterface) {
             // User not authenticated
             throw new UnauthorizedHttpException('');
+        }
+
+        // Construct url for making elastic search request
+        $config = $this->container->getParameter('xola_elasticsearch_proxy');
+
+        if(!in_array($index, $config['client']['indexes'])) {
+            throw new AccessDeniedHttpException();
         }
 
         // Get content for passing on in elastic search request
@@ -42,10 +50,9 @@ class ElasticsearchProxyController extends Controller
         // Get query string
         $query = $request->getQueryString();
 
-        // TODO: Do we want to add the protocol to the url ?
-        // Construct url for making elastic search request
+        // Construct url for making elastic search request99
         $config = $this->container->getParameter('xola_elasticsearch_proxy');
-        $url = $config['client']['host'] . ':' . $config['client']['port'] . '/' . $slug;
+        $url = $config['client']['protocol'] . '://' . $config['client']['host'] . ':' . $config['client']['port'] . '/' . $index . '/' . $slug;
 
         if($query) {
             // Query string exists. Add it to the url
@@ -116,10 +123,11 @@ class ElasticsearchProxyController extends Controller
                         array_push($query[$key]['bool']['must'], $authFilter);
                         $appliedFilter++;
                     }
-                    //Else: This filter does not have 'bool' key in it. Right now we support only boolean filters.
+                    // Else: This filter does not have 'bool' key in it. Right now we support only boolean filters.
+                    // Will get rejected as we don't increase $filterCounter['applied'] count
                 }
-                // Else. This is a filter that is not within a query. Will get rejected as we don't increment
-                // $filterCounter['applied']
+                // Else. This is a filter that is not within a query. Will get rejected as we don't increease
+                // $filterCounter['applied'] count
             } else {
 
                 if($key === 'query' && !$isQuery) {
