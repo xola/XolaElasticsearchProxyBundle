@@ -33,7 +33,7 @@ public function registerBundles()
 {
     $bundles = array(
         //...
-        new Xola\GiftBundle\XolaGiftBundle(),
+        new Xola\ElasticsearchProxyBundle\XolaElasticsearchProxyBundle(),
         //...
 ```
 Configuration
