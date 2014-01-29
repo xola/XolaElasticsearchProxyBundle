@@ -81,5 +81,4 @@ xola_elasticsearch_proxy:
 Credits
 -------
 
-[XolaElasticsearchProxy]: https://github.com/xola/XolaElasticsearchProxyBundle
-[Xola]: http://xola.com/overview
+* [Xola.com](http://xola.com/overview)
