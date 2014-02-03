@@ -1,16 +1,15 @@
 # IDE
 .idea/*
 
-# Bootstrap
-app/bootstrap*
+# Composer
+composer.lock
 
-# Symfony directories
+# Symfony
+app/bootstrap*
 vendor/*
 */logs/*
 */cache/*
 web/uploads/*
 web/bundles/*
-
-# Configuration files
 app/config/parameters.ini
 app/config/parameters.yml

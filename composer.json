@@ -1,14 +1,18 @@
 {
     "name": "xola/elasticsearch-proxy-bundle",
     "type": "symfony-bundle",
-    "description": "An authorization proxy for elasticsearch",
-    "keywords": ["elasticsearch", "search", "proxy", "authorization"],
+    "description": "A Symfony2 plugin that acts as an authorization proxy for elasticsearch",
+    "keywords": ["elasticsearch", "symfony", "search", "proxy", "authorization"],
     "homepage": "https://github.com/xola/XolaElasticsearchProxyBundle",
     "license": "MIT",
     "authors": [
         {
             "name": "Venkata Krishna Kotra",
             "email": "kotrakrishna@gmail.com"
+        },
+        {
+            "name": "Anush Ramani",
+            "email": "anush@xola.com"
         }
     ],
     "require": {
@@ -16,7 +20,9 @@
         "symfony/framework-bundle": "~2.1"
     },
     "autoload": {
-        "psr-0": { "Xola\\ElasticsearchProxyBundle": "" }
+        "psr-0": {
+            "Xola\\ElasticsearchProxyBundle": ""
+        }
     },
     "target-dir": "Xola/ElasticsearchProxyBundle"
 }
