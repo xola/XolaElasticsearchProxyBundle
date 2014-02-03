@@ -1,0 +1,7 @@
+parameters:
+    xola_elasticsearch_proxy:
+        client:
+            protocol: http
+            host: localhost
+            port: 9200
+            indexes: []
