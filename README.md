@@ -11,14 +11,6 @@ With composer, add:
 
 ```json
 {
-    "repositories" : [
-            {
-                "type" : "vcs",
-                "url" : "https://github.com/xola/XolaElasticsearchProxyBundle"
-            }
-        ]
-},
-{
     "require": {
         "xola/elasticsearch-proxy-bundle" : "dev-master"
     }
