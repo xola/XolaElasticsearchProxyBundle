@@ -65,7 +65,7 @@ class ElasticsearchProxyControllerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('http://localhost:9200/logs/_search?pretty=true', $url, 'Should be url built from proxy');
     }
 
-    public function testAddAuthFilter()
+    public function testAddAuthFilter_singleValidFilter()
     {
         $controller = $this->buildController();
 
@@ -109,6 +109,14 @@ class ElasticsearchProxyControllerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $filterCounter['applied'], 'Applied count should be zero as there were no applicable queries where filter can be applied');
         $this->assertEquals(0, $filterCounter['notApplied'], 'notApplied count should be zero as there were no applicable queries where filter can be applied in first place');
         $this->assertEquals('123', $data['facets']['gross']['facet_filter']['query']['filtered']['filter']['bool']['must'][0]['term']['seller.id'], 'Filter should get added correctly within must clause of bool filter');
+    }
+
+    public function testAddAuthFilter_singleInvalidFilter()
+    {
+        $controller = $this->buildController();
+
+        // Authorisation filter
+        $authFilter = array('term' => array('seller.id' => '123'));
 
         // Test with data having one filter where auth filter cannot be added. Right now we support only bool filters.
         $data = array(
@@ -138,6 +146,14 @@ class ElasticsearchProxyControllerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0, $filterCounter['applied'], 'Applied count should be zero as there is one applicable query where filter cannot be applied');
         $this->assertEquals(1, $filterCounter['notApplied'], 'notApplied count should be one as there is one applicable query where filter cannot be applied');
         $this->assertArrayNotHasKey('bool', $data['facets']['gross']['facet_filter']['query']['filtered']['filter'], 'Filter should  not get added');
+    }
+
+    public function testAddAuthFilter_multipleWithOneInvalidFilter()
+    {
+        $controller = $this->buildController();
+
+        // Authorisation filter
+        $authFilter = array('term' => array('seller.id' => '123'));
 
         // Test with data having many filters where auth filter cannot be added in one. Right now we support only bool filters.
         $data = array(
@@ -184,6 +200,14 @@ class ElasticsearchProxyControllerTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(1, $filterCounter['applied'], 'Applied count should be zero as there is one applicable query where filter cannot be applied');
         $this->assertEquals(1, $filterCounter['notApplied'], 'notApplied count should be one as there is one applicable query where filter cannot be applied');
         $this->assertArrayNotHasKey('bool', $data['facets']['gross']['facet_filter']['query']['filtered']['filter'], 'Filter should  not get added');
+    }
+
+    public function testAddAuthFilter_multipleValidFilters()
+    {
+        $controller = $this->buildController();
+
+        // Authorisation filter
+        $authFilter = array('term' => array('seller.id' => '123'));
 
         // Test with data having many filters where auth filter cannot be added in all.
         $data = array(
