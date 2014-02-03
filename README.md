@@ -1,7 +1,7 @@
 XolaElasticsearchProxyBundle
 ============================
 
-An authorization proxy for elasticsearch
+A Symfony2 plugin that acts as an authorization proxy for elasticsearch.
 
 
 Installation
@@ -36,6 +36,7 @@ public function registerBundles()
         new Xola\ElasticsearchProxyBundle\XolaElasticsearchProxyBundle(),
         //...
 ```
+
 Configuration
 -------------
 
@@ -43,15 +44,16 @@ Configuration
 # app/config/config.yml
 xola_elasticsearch_proxy:
     client:
-        protocol: 'http'
+        protocol: http
         host: localhost
         port: 9200
-        # allows queries to following indexes only.
         indexes: ['logs']
 ```
 
+The `indexes` parameter lets you grant access to only the specified elasticsearch indexes.
+
 Routing
--------------
+-------
 
 Update your routing
 
@@ -62,7 +64,8 @@ XolaElasticsearchProxyBundle:
     resource: "@XolaElasticsearchProxyBundle/Resources/config/routing.yml"
     prefix:   /
 ```
-The url for elasticsearch proxy by default is `/elasticsearch` and allows all HTTP methods.
+
+The default path is `/elasticsearch` and permits all HTTP methods (GET, PUT, POST, etc.).
 
 Override it. Ensure `index` (to capture elastic search index) and `slug` (to capture rest of the url) remain in the
 route pattern.
@@ -75,10 +78,3 @@ xola_elasticsearch_proxy:
      requirements:
         slug: ".+"
 ```
-
-
-
-Credits
--------
-
-* [Xola.com](http://xola.com/overview)
