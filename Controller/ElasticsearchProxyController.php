@@ -31,12 +31,18 @@ class ElasticsearchProxyController extends Controller
             throw new BadRequestHttpException();
         }
 
-        $filterCounter = array('applied' => 0, 'notApplied' => 0);
-        // Inject authorisation filter
-        $this->addAuthFilter($data, $this->getAuthorisationFilter(), $filterCounter);
-        if ($filterCounter['applied'] <= 0 || $filterCounter['notApplied'] > 0) {
-            // Authorisation filter could not be applied. Bad Request.
-            throw new BadRequestHttpException();
+        $filter = $this->getAuthorisationFilter();
+
+        if (!empty($filter)) {
+            // Inject authorisation filter
+            $filterCounter = array('applied' => 0, 'notApplied' => 0);
+
+            $this->addAuthFilter($data, $filter, $filterCounter);
+            if ($filterCounter['applied'] <= 0 || $filterCounter['notApplied'] > 0) {
+                // Authorisation filter could not be applied. Bad Request.
+                throw new BadRequestHttpException();
+            }
+
         }
 
         // Get url for elastic search
@@ -51,6 +57,14 @@ class ElasticsearchProxyController extends Controller
      */
     public function getAuthorisationFilter()
     {
+        $config = $this->container->getParameter('xola_elasticsearch_proxy');
+        foreach ($config['roles_skip_auth_filter'] as $role) {
+            if ($this->get('security.context')->isGranted($role)) {
+                // User has roles to skip authorisation filter. Return empty filter
+                return null;
+            }
+        }
+
         $user = $this->getUser();
         // Authorisation filter is the filter on seller
         $authFilter = array('term' => array('seller.id' => $user->getId()));

@@ -5,3 +5,5 @@ parameters:
             host: localhost
             port: 9200
             indexes: []
+
+        roles_skip_auth_filter: []
