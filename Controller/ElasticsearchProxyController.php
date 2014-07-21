@@ -31,19 +31,7 @@ class ElasticsearchProxyController extends Controller
             throw new BadRequestHttpException();
         }
 
-        $filter = $this->getAuthorisationFilter();
-
-        if (!empty($filter)) {
-            // Inject authorisation filter
-            $filterCounter = array('applied' => 0, 'notApplied' => 0);
-
-            $this->addAuthFilter($data, $filter, $filterCounter);
-            if ($filterCounter['applied'] <= 0 || $filterCounter['notApplied'] > 0) {
-                // Authorisation filter could not be applied. Bad Request.
-                throw new BadRequestHttpException();
-            }
-
-        }
+        $data = $this->addAuthFilter($data, $this->getAuthorisationFilter());
 
         // Get url for elastic search
         $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug);
@@ -58,10 +46,12 @@ class ElasticsearchProxyController extends Controller
     public function getAuthorisationFilter()
     {
         $config = $this->container->getParameter('xola_elasticsearch_proxy');
-        foreach ($config['roles_skip_auth_filter'] as $role) {
-            if ($this->get('security.context')->isGranted($role)) {
-                // User has roles to skip authorisation filter. Return empty filter
-                return null;
+        if ($config && isset($config['roles_skip_auth_filter'])) {
+            foreach ($config['roles_skip_auth_filter'] as $role) {
+                if ($this->get('security.context')->isGranted($role)) {
+                    // User has roles to skip authorisation filter. Return empty filter
+                    return null;
+                }
             }
         }
 
@@ -76,8 +66,8 @@ class ElasticsearchProxyController extends Controller
      * Returns the url for elastic search proxy.
      *
      * @param string $queryStr Query string of the request made to proxy
-     * @param string $index    Elastic search index to which queries are being made
-     * @param string $slug     Final bit of the url following index in the request made to proxy
+     * @param string $index Elastic search index to which queries are being made
+     * @param string $slug Final bit of the url following index in the request made to proxy
      *
      * @return string
      */
@@ -131,75 +121,55 @@ class ElasticsearchProxyController extends Controller
      * Recursively calls itself on child array values
      *
      *
-     * @param array $query          Elastic search query array
-     * @param array $authFilter     Authorisation filter that is to be added inside the query
-     * @param array $filterCounter  No. of times the filter was applied/not. Has keys 'applied' and 'notApplied' in it.
-     *                              For an applicable filter, if authorisation is added, 'applied' gets incremented.
-     *                              Else 'notApplied' gets incremented.
-     * @param int   $appliedFilter  Applicable only when called recursively. Incremented each time the authFilter gets applied.
-     * @param bool  $isQuery        Flag to indicate if $query is an elastic search query field or a child array of it.
+     * @param array $query Elastic search query array
+     * @param array $authFilter Authorisation filter that is to be added inside the query
+     *
+     * @throws BadRequestHttpException
+     * @return array
      */
-    public function addAuthFilter(&$query, $authFilter, &$filterCounter, &$appliedFilter = 0, $isQuery = false)
+    public function addAuthFilter($query, $authFilter)
     {
-        if (!is_array($query)) return;
-
-        // Set default values if null specified.
-        if (!is_array($filterCounter)) {
-            $filterCounter = array();
+        if (!is_array($query)) {
+            return;
         }
-        // Filter counter must have key 'applied'. No. of filters where authorisation was added. This should
-        // ideally be positive to ensure that the query was added with authorisation filter at least once.
-        if (!isset($filterCounter['applied'])) $filterCounter['applied'] = 0;
 
-        // Filter counter must have key 'notApplied'. No. of filters where addition of authorisation was missed. This
-        // should ideally be zero, i.e we have added authorisation on all filters where ever applicable
-        if (!isset($filterCounter['notApplied'])) $filterCounter['notApplied'] = 0;
+        if (isset($query['query'])) {
+            // Query exists.
+            if (isset($query['query']['filtered'])) {
+                // This is already filtered query. Add authorizaton using add filter.
+                if (isset($query['query']['filtered']['filter'])) {
+                    // Filter has been specified.
+                    $filter = $query['query']['filtered']['filter'];
+                    $query['query']['filtered']['filter'] = array(
+                        'and' => array(
+                            $authFilter,
+                            $filter
+                        )
+                    );
 
-        foreach ($query as $key => $val) {
-
-            if ($key === 'filter') {
-                if ($isQuery) {
-                    // This is filter within a query. Fine
-                    if (isset($query[$key]['bool']) && is_array($query[$key]['bool'])) {
-                        // Bool filter exists
-                        if (!isset($query[$key]['bool']['must'])) {
-                            $query[$key]['bool']['must'] = array();
-                        }
-
-                        if (is_array($query[$key]['bool']['must'])) {
-                            array_push($query[$key]['bool']['must'], $authFilter);
-                            $appliedFilter++;
-                        }
-                    }
-                    // Else: This filter does not have 'bool' key in it. Right now we support only boolean filters.
-                    // Will get rejected as we don't increase $filterCounter['applied'] count
-                }
-                // Else. This is a filter that is not within a query. Will get rejected as we don't increase
-                // $filterCounter['applied'] count
-            } else {
-
-                if ($key === 'query' && !$isQuery) {
-                    // This is a top level query field.
-
-                    // Counter to check how many times filter was applied within this array
-                    $applyFilterCount = 0;
-
-                    $this->addAuthFilter($query[$key], $authFilter, $filterCounter, $applyFilterCount, true);
-
-                    // This was a top level query field. Check if the Auth filter was added within this.
-                    if ($applyFilterCount <= 0) {
-                        // Filter was not applied to this query. Not right. This is a top level query and an
-                        // authorisation filter was supposed to get added within it.
-                        $filterCounter['notApplied'] += 1;
-                    } else {
-                        // Filter was successfully apply to this query
-                        $filterCounter['applied'] += 1;
-                    }
                 } else {
-                    $this->addAuthFilter($query[$key], $authFilter, $filterCounter, $appliedFilter, $isQuery);
+                    // Authorisation filter could not be applied because a filter key should exist withing a filtered key.. Bad Request.
+                    throw new BadRequestHttpException();
                 }
+            } else {
+                // This is not a filtered query. Make it a filtered query.
+                $q = $query['query'];
+                $query['query'] = array(
+                    'filtered' => array(
+                        'filter' => $authFilter,
+                        'query' => $q
+                    )
+                );
             }
-
+        } else {
+            // Query does not exist. Add a filtered query, with authentication filter only.
+            $query['query'] = array(
+                'filtered' => array(
+                    'filter' => $authFilter
+                )
+            );
         }
+
+        return $query;
     }
 }
