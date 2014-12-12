@@ -2,14 +2,18 @@
 namespace Xola\ElasticsearchProxyBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\DependencyInjection\Exception\RuntimeException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Xola\ElasticsearchProxyBundle\ElasticSearchProxyAuthenticatorInterface;
 
 class ElasticsearchProxyController extends Controller
 {
+
+    protected  $authenticator;
 
     public function proxyAction(Request $request, $index, $slug)
     {
@@ -21,6 +25,10 @@ class ElasticsearchProxyController extends Controller
 
         // Check if requested elastic search index is allowed for querying
         $config = $this->container->getParameter('xola_elasticsearch_proxy');
+
+        $this->setAuthenticator($config);
+        $this->authenticator->authenticate($request, $index, $slug);
+
         if (!in_array($index, $config['client']['indexes'])) {
             throw new AccessDeniedHttpException();
         }
@@ -31,35 +39,12 @@ class ElasticsearchProxyController extends Controller
             throw new BadRequestHttpException();
         }
 
-        $data = $this->addAuthFilter($data, $this->getAuthorisationFilter());
+        $this->authenticator->filter($request, $index, $slug, $data);
 
         // Get url for elastic search
         $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug);
 
         return $this->makeRequestToElasticsearch($url, $request->getMethod(), $data);
-    }
-
-    /**
-     * Returns the authorisation filter that can be applied within a bool filter's MUST clause
-     * It is currently a filter on seller's id.
-     */
-    public function getAuthorisationFilter()
-    {
-        $config = $this->container->getParameter('xola_elasticsearch_proxy');
-        if ($config && isset($config['roles_skip_auth_filter'])) {
-            foreach ($config['roles_skip_auth_filter'] as $role) {
-                if ($this->get('security.context')->isGranted($role)) {
-                    // User has roles to skip authorisation filter. Return empty filter
-                    return null;
-                }
-            }
-        }
-
-        $user = $this->getUser();
-        // Authorisation filter is the filter on seller
-        $authFilter = array('term' => array('seller.id' => $user->getId()));
-
-        return $authFilter;
     }
 
     /**
@@ -116,60 +101,27 @@ class ElasticsearchProxyController extends Controller
     }
 
     /**
-     * Modifies the specified elastic search query by injecting it with the specified authorisation filter.
-     * Looks for all the boolean filters in the query and adds authorisation filter within 'MUST' clause.
-     * Recursively calls itself on child array values
+     * Injects authenticator from provided config
+     * @param $config
      *
-     *
-     * @param array $query Elastic search query array
-     * @param array $authFilter Authorisation filter that is to be added inside the query
-     *
-     * @throws BadRequestHttpException
-     * @return array
+     * @throws \Symfony\Component\DependencyInjection\Exception\RuntimeException
      */
-    public function addAuthFilter($query, $authFilter)
+    public function setAuthenticator($config)
     {
-        if (!is_array($query)) {
+        if($this->authenticator) return;
+        if($config instanceof ElasticSearchProxyAuthenticatorInterface) {
+            $this->authenticator = $config;
             return;
         }
 
-        if (isset($query['query'])) {
-            // Query exists.
-            if (isset($query['query']['filtered'])) {
-                // This is already filtered query. Add authorizaton using add filter.
-                if (isset($query['query']['filtered']['filter'])) {
-                    // Filter has been specified.
-                    $filter = $query['query']['filtered']['filter'];
-                    $query['query']['filtered']['filter'] = array(
-                        'and' => array(
-                            $authFilter,
-                            $filter
-                        )
-                    );
+        $authenticatorInterface = 'Xola\ElasticsearchProxyBundle\ElasticSearchProxyAuthenticatorInterface';
+        $authenticatorClass = $config['authenticator'];
+        $this->authenticator = new $authenticatorClass();
+        $reflectionClass = new \ReflectionClass($this->authenticator);
 
-                } else {
-                    // Authorisation filter could not be applied because a filter key should exist withing a filtered key.. Bad Request.
-                    throw new BadRequestHttpException();
-                }
-            } else {
-                // This is not a filtered query. Make it a filtered query.
-                $q = $query['query'];
-                $query['query'] = array(
-                    'filtered' => array(
-                        'filter' => $authFilter,
-                        'query' => $q
-                    )
-                );
-            }
-        } else {
-            // Query does not exist. Add a filtered query, with authentication filter only.
-            $query['query'] = array(
-                'filtered' => array(
-                    'filter' => $authFilter
-                )
-            );
+        if(!$reflectionClass->implementsInterface($authenticatorInterface)){
+            $class = get_class($this->authenticator);
+            throw new RuntimeException('Expected ' . $class . 'to implement ' . $authenticatorInterface);
         }
-
-        return $query;
     }
 }
