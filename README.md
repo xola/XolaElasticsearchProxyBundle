@@ -44,10 +44,10 @@ xola_elasticsearch_proxy:
     authenticator: Xola\ElasticsearchProxyBundle\Authenticator
 ```
 
-The `indexes` parameter lets you grant access to only the specified elasticsearch indexes.
-Override `authenticator` parameter and give it a classname which implements ElasticSearchProxyAuthenticatorInterface to
-authenticate a request. The `authenticate` method should throw an `AccessDeniedException` if access is denied to the
-user.
+* The `indexes` parameter lets you grant access to only the specified elasticsearch indexes.
+* Override `authenticator` parameter and give it a classname which implements ElasticSearchProxyAuthenticatorInterface to authenticate a request.
+    * The `authenticate` method should throw an `AccessDeniedException` if access is denied to the user.
+    * The `filter` method can change the query sent to elastic search. Just change the `$query` parameter. Any custom logic to limit the search results can be implemented here.
 
 Routing
 -------

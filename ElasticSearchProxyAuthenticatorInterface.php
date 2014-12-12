@@ -25,8 +25,8 @@ interface ElasticSearchProxyAuthenticatorInterface
      * @param Request $request
      * @param         $index
      * @param         $slug
-     * @param array   $data
+     * @param array   $query
      *
      */
-    public function filter(Request $request, $index, $slug, $data);
+    public function filter(Request $request, $index, $slug, $query);
 } 
