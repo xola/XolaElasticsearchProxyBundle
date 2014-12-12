@@ -6,4 +6,5 @@ parameters:
             port: 9200
             indexes: []
 
+        authenticator: Xola\ElasticsearchProxyBundle\Authenticator
         roles_skip_auth_filter: []

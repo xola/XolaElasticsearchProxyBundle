@@ -23,7 +23,8 @@ class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
-                ->arrayNode('roles_skip_auth_filter')->prototype('scalar')->end()
+            ->scalarNode('authenticator')->defaultValue('Xola\ElasticsearchProxyBundle\Authenticator')->end()
+            ->arrayNode('roles_skip_auth_filter')->prototype('scalar')->end()
             ->end()
         ->end();
         return $treeBuilder;

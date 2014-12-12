@@ -40,9 +40,14 @@ xola_elasticsearch_proxy:
         host: localhost
         port: 9200
         indexes: ['logs']
+
+    authenticator: Xola\ElasticsearchProxyBundle\Authenticator
 ```
 
 The `indexes` parameter lets you grant access to only the specified elasticsearch indexes.
+Override `authenticator` parameter and give it a classname which implements ElasticSearchProxyAuthenticatorInterface to
+authenticate a request. The `authenticate` method should throw an `AccessDeniedException` if access is denied to the
+user.
 
 Routing
 -------
