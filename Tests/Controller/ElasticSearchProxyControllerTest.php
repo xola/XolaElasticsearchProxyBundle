@@ -2,6 +2,7 @@
 
 namespace Xola\ElasticsearchProxyBundle\Tests\Controller;
 
+use Symfony\Component\HttpFoundation\Request;
 use Xola\ElasticsearchProxyBundle\Controller\ElasticsearchProxyController;
 use Xola\ElasticsearchProxyBundle\Tests\Mocks\MockUser;
 
@@ -57,5 +58,17 @@ class ElasticsearchProxyControllerTest extends \PHPUnit_Framework_TestCase
         $url = $controller->getElasticSearchUrl('pretty=true', 'logs', '_search');
 
         $this->assertEquals('http://localhost:9200/logs/_search?pretty=true', $url, 'Should be url built from proxy');
+    }
+
+    public function testProxyAction()
+    {
+        $controller = $this->buildController();
+        $request = new Request([], [], [], [], [], [], '{"x": 1}');
+
+        $authenticator = $this->getMock("Xola\ElasticsearchProxyBundle\ElasticSearchProxyAuthenticatorInterface");
+        $controller->setAuthenticator($authenticator);
+        $authenticator->expects($this->once())->method('authenticate');
+        $authenticator->expects($this->once())->method('filter');
+        $controller->proxyAction($request, 'logs', '');
     }
 }
