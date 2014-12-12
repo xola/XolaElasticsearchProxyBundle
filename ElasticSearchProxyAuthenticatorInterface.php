@@ -14,9 +14,19 @@ interface ElasticSearchProxyAuthenticatorInterface
      * @param Request $request
      * @param $index
      * @param $slug
-     * @return mixed
      *
      * @throws AccessDeniedException
      */
     public function authenticate(Request $request, $index, $slug);
+
+    /**
+     * Add filter to restrict data
+     *
+     * @param Request $request
+     * @param         $index
+     * @param         $slug
+     * @param array   $data
+     *
+     */
+    public function filter(Request $request, $index, $slug, $data);
 } 

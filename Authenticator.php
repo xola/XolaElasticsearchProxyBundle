@@ -10,4 +10,9 @@ class Authenticator implements ElasticSearchProxyAuthenticatorInterface
     {
 
     }
+
+    public function filter(Request $request, $index, $slug, $data)
+    {
+
+    }
 } 

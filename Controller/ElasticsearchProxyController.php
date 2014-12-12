@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Xola\ElasticsearchProxyBundle\ElasticSearchProxyAuthenticatorInterface;
 
 class ElasticsearchProxyController extends Controller
 {
@@ -37,6 +38,8 @@ class ElasticsearchProxyController extends Controller
         if (!$data) {
             throw new BadRequestHttpException();
         }
+
+        $this->authenticator->filter($request, $index, $slug, $data);
 
         // Get url for elastic search
         $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug);
@@ -106,6 +109,11 @@ class ElasticsearchProxyController extends Controller
     public function setAuthenticator($config)
     {
         if($this->authenticator) return;
+        if($config instanceof ElasticSearchProxyAuthenticatorInterface) {
+            $this->authenticator = $config;
+            return;
+        }
+
         $authenticatorInterface = 'Xola\ElasticsearchProxyBundle\ElasticSearchProxyAuthenticatorInterface';
         $authenticatorClass = $config['authenticator'];
         $this->authenticator = new $authenticatorClass();
