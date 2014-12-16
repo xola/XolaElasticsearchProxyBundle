@@ -3,6 +3,7 @@
 namespace Xola\ElasticsearchProxyBundle\Event;
 use Symfony\Component\EventDispatcher\Event as SymfonyEvent;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class ElasticsearchProxyEvent extends SymfonyEvent {
 
@@ -17,12 +18,16 @@ class ElasticsearchProxyEvent extends SymfonyEvent {
     // The elasticsearch query array
     protected $query;
 
-    public function __construct(Request $request, $index, $slug, array &$query)
+    //Response as received from ElasticSearch
+    protected $response;
+
+    public function __construct(Request $request, $index, $slug, array &$query, Response $response = null)
     {
         $this->request = $request;
         $this->index = $index;
         $this->slug = $slug;
         $this->query = $query;
+        $this->response = $response;
     }
 
     /**
@@ -89,5 +94,19 @@ class ElasticsearchProxyEvent extends SymfonyEvent {
         return $this->query;
     }
 
+    /**
+     * @param \Symfony\Component\HttpFoundation\Response $response
+     */
+    public function setResponse($response)
+    {
+        $this->response = $response;
+    }
 
+    /**
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public function getResponse()
+    {
+        return $this->response;
+    }
 }

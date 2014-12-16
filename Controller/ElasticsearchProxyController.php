@@ -25,12 +25,15 @@ class ElasticsearchProxyController extends Controller
 
         $event = new ElasticsearchProxyEvent($request, $index, $slug, $data);
         $dispatcher = $this->get('event_dispatcher');
-        $dispatcher->dispatch('elasticsearch_proxy.before_request', $event);
+        $dispatcher->dispatch('elasticsearch_proxy.before_elasticsearch_request', $event);
         $data = $event->getQuery();
         // Get url for elastic search
         $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug);
+        $response = $this->makeRequestToElasticsearch($url, $request->getMethod(), $data);
+        $event->setResponse($response);
+        $dispatcher->dispatch('elasticsearch_proxy.after_elasticsearch_response', $event);
 
-        return $this->makeRequestToElasticsearch($url, $request->getMethod(), $data);
+        return $event->getResponse();
     }
 
     /**

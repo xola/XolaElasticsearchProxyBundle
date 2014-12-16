@@ -71,9 +71,15 @@ xola_elasticsearch_proxy:
         slug: ".+"
 ```
 
-Event
------
-Dispatches event `elasticsearch_proxy.before_request`. This is the chance to modify the request being sent to elastic
+Events
+------
+`elasticsearch_proxy.before_elasticsearch_request`
+Dispatches event `elasticsearch_proxy.before_elasticsearch__request`. This is the chance to modify the request being sent to elastic
 search. The listener will receive `ElasticsearchProxyEvent` as argument. This event object contains request, index,
 slug, and the query object. Modify this query object and set it back on the event with `setQuery`. The request will be
 sent with modified body.
+
+`elasticsearch_proxy.after_elasticsearch_response`
+Dispatched after response has been received from elastic search. The listener will receive `ElasticsearchProxyEvent` as
+argument. This event object contains request, index, slug, query, and response objects. The response will be sent to the
+client. Modify this response and set it back on the event to change it.
