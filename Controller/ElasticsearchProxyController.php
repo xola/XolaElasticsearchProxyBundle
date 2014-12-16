@@ -14,12 +14,6 @@ class ElasticsearchProxyController extends Controller
 
     public function proxyAction(Request $request, $index, $slug)
     {
-        $user = $this->getUser();
-        if (!$user) {
-            // User not authenticated
-            throw new UnauthorizedHttpException('');
-        }
-
         // Check if requested elastic search index is allowed for querying
         $config = $this->container->getParameter('xola_elasticsearch_proxy');
         if (!in_array($index, $config['client']['indexes'])) {
@@ -28,9 +22,6 @@ class ElasticsearchProxyController extends Controller
 
         // Get content for passing on in elastic search request
         $data = json_decode($request->getContent(), true);
-        if (!$data) {
-            throw new BadRequestHttpException();
-        }
 
         $event = new ElasticsearchProxyEvent($request, $index, $slug, $data);
         $dispatcher = $this->get('event_dispatcher');
