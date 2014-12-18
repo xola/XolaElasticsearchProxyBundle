@@ -1,7 +1,7 @@
 XolaElasticsearchProxyBundle
 ============================
 
-A Symfony2 plugin that acts as an authorization proxy for elasticsearch.
+A Symfony2 plugin that acts as a proxy for Elasticsearch.
 
 
 Installation
@@ -73,13 +73,12 @@ xola_elasticsearch_proxy:
 
 Events
 ------
-`elasticsearch_proxy.before_elasticsearch_request`
-Dispatches event `elasticsearch_proxy.before_elasticsearch__request`. This is the chance to modify the request being sent to elastic
-search. The listener will receive `ElasticsearchProxyEvent` as argument. This event object contains request, index,
-slug, and the query object. Modify this query object and set it back on the event with `setQuery`. The request will be
-sent with modified body.
 
-`elasticsearch_proxy.after_elasticsearch_response`
-Dispatched after response has been received from elastic search. The listener will receive `ElasticsearchProxyEvent` as
-argument. This event object contains request, index, slug, query, and response objects. The response will be sent to the
-client. Modify this response and set it back on the event to change it.
+There are a couple of events fired by the bundle controller that can help you. By listening to these events you can add any custom authentication or filtering logic you require.
+
+1. `elasticsearch_proxy.before_elasticsearch_request` -
+This event is fired before the request is sent to Elasticsearch. The listener will receive `ElasticsearchProxyEvent` as an argument containing the request, index, slug, and the query object. You may modify this query object and set it back on the event with `setQuery`. The updated request will then be sent on to Elasticsearch. 
+
+2. `elasticsearch_proxy.after_elasticsearch_response` -
+This event is fired after a response has been received from Elasticsearch. The listener will receive `ElasticsearchProxyEvent` as
+argument containing the request, index, slug, query, and response objects. You may modify the response and set it back into the event. The updated response is then sent back to the client.
