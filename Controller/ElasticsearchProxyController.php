@@ -20,6 +20,11 @@ class ElasticsearchProxyController extends Controller
 
         // Get content for passing on in elastic search request
         $data = json_decode($request->getContent(), true);
+        if (!is_array($data)) {
+            // This is not an array possibly because there was invalid data in the request
+            // Set it to an array since the proxy event expects one
+            $data = array();
+        }
 
         $event = new ElasticsearchProxyEvent($request, $index, $slug, $data);
         $dispatcher = $this->get('event_dispatcher');
