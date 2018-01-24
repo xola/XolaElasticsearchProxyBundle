@@ -75,10 +75,16 @@ class ElasticsearchProxyController extends Controller
     public function makeRequestToElasticsearch($url, $method, $data)
     {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
+
+        // Strip query params from URL because ES doesn't like it
+        $cleanUrl = strtok($url, '?');
+        // This hack is required because json_encode converts {} to []. ES expects an empty object {}
+        $jsonValue = str_replace("[]", "{}", json_encode($data));
+
+        curl_setopt($ch, CURLOPT_URL, $cleanUrl);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-type: application/json'));
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonValue);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
