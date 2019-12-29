@@ -11,7 +11,7 @@ class ElasticsearchProxyControllerTest extends TestCase
     /** @var ElasticsearchProxyController */
     private $controller;
 
-    public function setUp()
+    protected function setUp()
     {
         parent::setUp();
 
