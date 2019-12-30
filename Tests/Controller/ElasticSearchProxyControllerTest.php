@@ -11,10 +11,8 @@ class ElasticsearchProxyControllerTest extends TestCase
     /** @var ElasticsearchProxyController */
     private $controller;
 
-    protected function setUp()
+    protected function setUp(): void
     {
-        parent::setUp();
-
         $container = $this->createMock(ContainerInterface::class);
         $config = array(
             'client' => array(
