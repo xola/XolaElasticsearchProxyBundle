@@ -1,5 +1,5 @@
 xola_elasticsearch_proxy:
-     pattern:  /elasticsearch/{index}/{slug}
+     path:  /elasticsearch/{index}/{slug}
      defaults: { _controller: XolaElasticsearchProxyBundle:ElasticsearchProxy:proxy }
      requirements:
         slug: ".+"
