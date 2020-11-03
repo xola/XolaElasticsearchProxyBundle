@@ -78,8 +78,8 @@ class ElasticsearchProxyController extends Controller
 
         // Strip query params from URL because ES doesn't like it
         $cleanUrl = strtok($url, '?');
-        // This hack is required because json_encode converts {} to []. ES expects an empty object {}
-        $jsonValue = str_replace("[]", "{}", json_encode($data));
+        // This hack is required because json_encode converts [] to {} and ES does not like that
+        $jsonValue = str_replace('"reverse_nested":[]', '"reverse_nested":{}', json_encode($data));
 
         curl_setopt($ch, CURLOPT_URL, $cleanUrl);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
