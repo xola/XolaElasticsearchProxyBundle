@@ -1,16 +1,15 @@
 <?php
 namespace Xola\ElasticsearchProxyBundle\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Xola\ElasticsearchProxyBundle\Event\ElasticsearchProxyEvent;
 
-class ElasticsearchProxyController extends Controller
+class ElasticsearchProxyController extends AbstractController
 {
-
-    public function proxyAction(Request $request, $index, $slug)
+    public function proxyAction(Request $request, $index, $slug): ?Response
     {
         // Check if requested elastic search index is allowed for querying
         $config = $this->container->getParameter('xola_elasticsearch_proxy');
@@ -48,7 +47,7 @@ class ElasticsearchProxyController extends Controller
      *
      * @return string
      */
-    public function getElasticSearchUrl($queryStr, $index, $slug)
+    public function getElasticSearchUrl($queryStr, $index, $slug): string
     {
         $config = $this->container->getParameter('xola_elasticsearch_proxy');
 
@@ -72,7 +71,7 @@ class ElasticsearchProxyController extends Controller
      *
      * @return Response
      */
-    public function makeRequestToElasticsearch($url, $method, $data)
+    public function makeRequestToElasticsearch($url, $method, $data): Response
     {
         $ch = curl_init();
 
