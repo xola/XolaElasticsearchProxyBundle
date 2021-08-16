@@ -2,6 +2,7 @@
 namespace Xola\ElasticsearchProxyBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -9,6 +10,11 @@ use Xola\ElasticsearchProxyBundle\Event\ElasticsearchProxyEvent;
 
 class ElasticsearchProxyController extends AbstractController
 {
+    public function __construct(ContainerInterface $container)
+    {
+        $this->container = $container;
+    }
+
     public function proxyAction(Request $request, $index, $slug): ?Response
     {
         // Check if requested elastic search index is allowed for querying

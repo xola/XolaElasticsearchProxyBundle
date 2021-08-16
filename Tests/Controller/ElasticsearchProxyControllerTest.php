@@ -26,8 +26,7 @@ class ElasticsearchProxyControllerTest extends TestCase
         $container->expects($this->any())->method("getParameter")->with("xola_elasticsearch_proxy")
             ->willReturn($config);
 
-        $this->controller = new ElasticsearchProxyController();
-        $this->controller->setContainer($container);
+        $this->controller = new ElasticsearchProxyController($container);
     }
 
 
