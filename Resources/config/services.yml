@@ -1,0 +1,8 @@
+services:
+    _defaults:
+        autowire: true
+        public: false
+
+    Xola\ElasticsearchProxyBundle\Controller\:
+        resource: './Controller'
+        tags: ['controller.service_arguments']

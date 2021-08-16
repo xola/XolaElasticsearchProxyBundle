@@ -12,6 +12,7 @@ class XolaElasticsearchProxyExtension extends Extension
     {
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('config.yml');
+        $loader->load('services.yml');
 
         $defaultConfig = $container->getParameter($this->getAlias());
         array_splice($configs, 0, 0, array($defaultConfig));
