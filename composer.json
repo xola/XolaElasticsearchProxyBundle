@@ -5,19 +5,9 @@
     "keywords": ["elasticsearch", "symfony", "search", "proxy", "authorization"],
     "homepage": "https://github.com/xola/XolaElasticsearchProxyBundle",
     "license": "MIT",
-    "authors": [
-        {
-            "name": "Venkata Krishna Kotra",
-            "email": "kotrakrishna@gmail.com"
-        },
-        {
-            "name": "Anush Ramani",
-            "email": "anush@xola.com"
-        }
-    ],
     "require": {
         "php": ">=7.1",
-        "symfony/framework-bundle": ">=2.1",
+        "symfony/framework-bundle": ">=4",
         "ext-curl": "*",
         "ext-json": "*"
     },
@@ -25,9 +15,8 @@
         "phpunit/phpunit": "^7"
     },
     "autoload": {
-        "psr-0": {
-            "Xola\\ElasticsearchProxyBundle": ""
+        "psr-4": {
+            "Xola\\ElasticsearchProxyBundle\\": ""
         }
-    },
-    "target-dir": "Xola/ElasticsearchProxyBundle"
+    }
 }

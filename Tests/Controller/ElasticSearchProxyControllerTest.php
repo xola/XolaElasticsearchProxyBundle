@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Xola\ElasticsearchProxyBundle\Controller\ElasticsearchProxyController;
 
-class ElasticsearchProxyControllerTest extends TestCase
+class ElasticSearchProxyControllerTest extends TestCase
 {
     /** @var ElasticsearchProxyController */
     private $controller;
