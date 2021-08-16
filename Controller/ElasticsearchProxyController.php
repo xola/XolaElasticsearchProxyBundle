@@ -12,7 +12,7 @@ class ElasticsearchProxyController extends AbstractController
     public function proxyAction(Request $request, $index, $slug): ?Response
     {
         // Check if requested elastic search index is allowed for querying
-        $config = $this->getParameter('xola_elasticsearch_proxy');
+        $config = $this->container->get('xola_elasticsearch_proxy');
         if (!in_array($index, $config['client']['indexes'])) {
             throw new AccessDeniedHttpException();
         }

@@ -21,7 +21,7 @@ class XolaElasticsearchProxyExtension extends Extension
         $container->setParameter($this->getAlias(), $config);
     }
 
-    public function getAlias()
+    public function getAlias(): string
     {
         return 'xola_elasticsearch_proxy';
     }

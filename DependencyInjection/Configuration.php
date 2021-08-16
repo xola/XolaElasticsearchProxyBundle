@@ -6,12 +6,11 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('xola_elasticsearch_proxy');
+        $treeBuilder = new TreeBuilder('xola_elasticsearch_proxy');
 
-        $rootNode
+        $treeBuilder->getRootNode()
             ->children()
                 ->arrayNode('client')
                     ->children()
@@ -26,6 +25,7 @@ class Configuration implements ConfigurationInterface
                 ->arrayNode('roles_skip_auth_filter')->prototype('scalar')->end()
             ->end()
         ->end();
+
         return $treeBuilder;
     }
 }
