@@ -9,7 +9,6 @@ env:
   - SYMFONY_VERSION="3.4"
   - SYMFONY_VERSION="4.0"
   - SYMFONY_VERSION="4.4"
-  - SYMFONY_VERSION="5.0"
 
 before_script:
   - composer self-update
