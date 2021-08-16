@@ -8,9 +8,10 @@ class Configuration implements ConfigurationInterface
 {
     public function getConfigTreeBuilder(): TreeBuilder
     {
-        $treeBuilder = new TreeBuilder('xola_elasticsearch_proxy');
+        $treeBuilder = new TreeBuilder();
+        $rootNode = $treeBuilder->root('xola_elasticsearch_proxy');
 
-        $treeBuilder->getRootNode()
+        $rootNode
             ->children()
                 ->arrayNode('client')
                     ->children()
