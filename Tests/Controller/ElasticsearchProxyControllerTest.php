@@ -8,10 +8,7 @@ use Xola\ElasticsearchProxyBundle\Controller\ElasticsearchProxyController;
 
 class ElasticsearchProxyControllerTest extends TestCase
 {
-    /** @var ElasticsearchProxyController */
-    private $controller;
-
-    protected function setUp(): void
+    public function testGetElasticSearchUrl()
     {
         $container = $this->createMock(ContainerInterface::class);
         $config = array(
@@ -23,19 +20,12 @@ class ElasticsearchProxyControllerTest extends TestCase
             ),
             'roles_skip_auth_filter' => array()
         );
-        $container->expects($this->any())->method("getParameter")->with("xola_elasticsearch_proxy")
+        $container->expects($this->once())->method("getParameter")->with("xola_elasticsearch_proxy")
             ->willReturn($config);
+        $controller = new ElasticsearchProxyController();
 
-        $this->controller = new ElasticsearchProxyController();
-        $this->controller->setContainer($container);
-    }
-
-
-    public function testGetElasticSearchUrl()
-    {
-        $url = $this->controller->getElasticSearchUrl('pretty=true', 'logs', '_search');
+        $url = $controller->getElasticSearchUrl('pretty=true', 'logs', '_search', $container);
 
         $this->assertEquals('http://localhost:9200/logs/_search?pretty=true', $url, 'Should be url built from proxy');
     }
-
 }

@@ -1,19 +1,19 @@
 <?php
 namespace Xola\ElasticsearchProxyBundle\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Xola\ElasticsearchProxyBundle\Event\ElasticsearchProxyEvent;
 
-class ElasticsearchProxyController extends Controller
+class ElasticsearchProxyController extends AbstractController
 {
-
-    public function proxyAction(Request $request, $index, $slug)
+    public function proxyAction(Request $request, $index, $slug, ContainerInterface $container): ?Response
     {
         // Check if requested elastic search index is allowed for querying
-        $config = $this->container->getParameter('xola_elasticsearch_proxy');
+        $config = $container->getParameter('xola_elasticsearch_proxy');
         if (!in_array($index, $config['client']['indexes'])) {
             throw new AccessDeniedHttpException();
         }
@@ -31,7 +31,7 @@ class ElasticsearchProxyController extends Controller
         $dispatcher->dispatch('elasticsearch_proxy.before_elasticsearch_request', $event);
         $data = $event->getQuery();
         // Get url for elastic search
-        $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug);
+        $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug, $container);
         $response = $this->makeRequestToElasticsearch($url, $request->getMethod(), $data);
         $event->setResponse($response);
         $dispatcher->dispatch('elasticsearch_proxy.after_elasticsearch_response', $event);
@@ -48,9 +48,9 @@ class ElasticsearchProxyController extends Controller
      *
      * @return string
      */
-    public function getElasticSearchUrl($queryStr, $index, $slug)
+    public function getElasticSearchUrl($queryStr, $index, $slug, ContainerInterface $container): string
     {
-        $config = $this->container->getParameter('xola_elasticsearch_proxy');
+        $config = $container->getParameter('xola_elasticsearch_proxy');
 
         // Construct url for making elastic search request
         $url = $config['client']['protocol'] . '://' . $config['client']['host'] . ':' . $config['client']['port'] . '/' . $index . '/' . $slug;
@@ -72,7 +72,7 @@ class ElasticsearchProxyController extends Controller
      *
      * @return Response
      */
-    public function makeRequestToElasticsearch($url, $method, $data)
+    public function makeRequestToElasticsearch($url, $method, $data): Response
     {
         $ch = curl_init();
 
