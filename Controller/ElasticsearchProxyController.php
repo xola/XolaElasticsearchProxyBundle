@@ -10,10 +10,10 @@ use Xola\ElasticsearchProxyBundle\Event\ElasticsearchProxyEvent;
 
 class ElasticsearchProxyController extends AbstractController
 {
-    public function proxyAction(Request $request, $index, $slug): ?Response
+    public function proxyAction(Request $request, $index, $slug, ContainerInterface $container): ?Response
     {
         // Check if requested elastic search index is allowed for querying
-        $config = $this->container->get('xola_elasticsearch_proxy');
+        $config = $container->getParameter('xola_elasticsearch_proxy');
         if (!in_array($index, $config['client']['indexes'])) {
             throw new AccessDeniedHttpException();
         }
