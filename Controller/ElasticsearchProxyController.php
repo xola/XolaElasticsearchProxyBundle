@@ -31,7 +31,7 @@ class ElasticsearchProxyController extends AbstractController
         $dispatcher->dispatch('elasticsearch_proxy.before_elasticsearch_request', $event);
         $data = $event->getQuery();
         // Get url for elastic search
-        $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug);
+        $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug, $container);
         $response = $this->makeRequestToElasticsearch($url, $request->getMethod(), $data);
         $event->setResponse($response);
         $dispatcher->dispatch('elasticsearch_proxy.after_elasticsearch_response', $event);
@@ -48,9 +48,9 @@ class ElasticsearchProxyController extends AbstractController
      *
      * @return string
      */
-    public function getElasticSearchUrl($queryStr, $index, $slug): string
+    public function getElasticSearchUrl($queryStr, $index, $slug, ContainerInterface $container): string
     {
-        $config = $this->container->getParameter('xola_elasticsearch_proxy');
+        $config = $container->getParameter('xola_elasticsearch_proxy');
 
         // Construct url for making elastic search request
         $url = $config['client']['protocol'] . '://' . $config['client']['host'] . ':' . $config['client']['port'] . '/' . $index . '/' . $slug;
