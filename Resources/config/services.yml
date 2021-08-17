@@ -4,5 +4,5 @@ services:
         public: false
 
     Xola\ElasticsearchProxyBundle\Controller\:
-        resource: '../Controller'
+        resource: '../../Controller'
         tags: ['controller.service_arguments']
