@@ -1,4 +1,5 @@
 <?php
+
 namespace Xola\ElasticsearchProxyBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,13 +29,14 @@ class ElasticsearchProxyController extends AbstractController
 
         $event = new ElasticsearchProxyEvent($request, $index, $slug, $data);
         $dispatcher = $this->get('event_dispatcher');
-        $dispatcher->dispatch('elasticsearch_proxy.before_elasticsearch_request', $event);
+        // Symfony >=4.3 dispatch signature is dispatch(Event $event, string $eventName = null)
+        $dispatcher->dispatch($event, 'elasticsearch_proxy.before_elasticsearch_request');
         $data = $event->getQuery();
         // Get url for elastic search
         $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug, $container);
         $response = $this->makeRequestToElasticsearch($url, $request->getMethod(), $data);
         $event->setResponse($response);
-        $dispatcher->dispatch('elasticsearch_proxy.after_elasticsearch_response', $event);
+        $dispatcher->dispatch($event, 'elasticsearch_proxy.after_elasticsearch_response');
 
         return $event->getResponse();
     }

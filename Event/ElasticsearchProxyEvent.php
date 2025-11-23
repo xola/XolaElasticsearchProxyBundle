@@ -2,11 +2,11 @@
 
 namespace Xola\ElasticsearchProxyBundle\Event;
 
-use Symfony\Component\EventDispatcher\Event;
+// use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class ElasticsearchProxyEvent extends Event
+class ElasticsearchProxyEvent
 {
     // The request object
     protected $request;
