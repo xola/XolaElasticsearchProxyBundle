@@ -1,7 +1,7 @@
 {
     "name": "xola/elasticsearch-proxy-bundle",
     "type": "symfony-bundle",
-    "description": "A Symfony2 plugin that acts as an authorization proxy for elasticsearch",
+    "description": "A Symfony 5.4+ bundle that acts as an authorization proxy for Elasticsearch",
     "keywords": [
         "elasticsearch",
         "symfony",
