@@ -6,11 +6,18 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Xola\ElasticsearchProxyBundle\Event\ElasticsearchProxyEvent;
 
 class ElasticsearchProxyController extends AbstractController
 {
-    public function proxyAction(Request $request, $index, $slug, ContainerInterface $container): ?Response
+    public function proxyAction(
+        Request $request,
+        $index,
+        $slug,
+        ContainerInterface $container,
+        EventDispatcherInterface $dispatcher
+    ): ?Response
     {
         // Check if requested elastic search index is allowed for querying
         $config = $container->getParameter('xola_elasticsearch_proxy');
@@ -27,14 +34,13 @@ class ElasticsearchProxyController extends AbstractController
         }
 
         $event = new ElasticsearchProxyEvent($request, $index, $slug, $data);
-        $dispatcher = $this->get('event_dispatcher');
-        $dispatcher->dispatch('elasticsearch_proxy.before_elasticsearch_request', $event);
+        $dispatcher->dispatch($event, 'elasticsearch_proxy.before_elasticsearch_request');
         $data = $event->getQuery();
         // Get url for elastic search
         $url = $this->getElasticSearchUrl($request->getQueryString(), $index, $slug, $container);
         $response = $this->makeRequestToElasticsearch($url, $request->getMethod(), $data);
         $event->setResponse($response);
-        $dispatcher->dispatch('elasticsearch_proxy.after_elasticsearch_response', $event);
+        $dispatcher->dispatch($event, 'elasticsearch_proxy.after_elasticsearch_response');
 
         return $event->getResponse();
     }
